@@ -53,7 +53,15 @@ const signup = async (req, res) => {
     await user.save();
 
     const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
+      expiresIn: "90d",
+    });
+
+    // set the token in HTTP-only cookie
+    res.cookie("token", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 90 * 24 * 60 * 60 * 1000,
     });
 
     return res.status(201).json({
@@ -66,7 +74,6 @@ const signup = async (req, res) => {
         role: user.role,
         createdAt: user.createdAt,
       },
-      token: accessToken,
     });
   } catch (error) {
     console.error("Error creating user: ", error);
@@ -114,7 +121,15 @@ const login = async (req, res) => {
     }
 
     const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
+      expiresIn: "90d",
+    });
+
+    // set the token in HTTP-only cookie
+    res.cookie("token", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 90 * 24 * 60 * 60 * 1000,
     });
 
     return res.status(200).json({
@@ -127,7 +142,6 @@ const login = async (req, res) => {
         role: user.role,
         createdAt: user.createdAt,
       },
-      token: accessToken,
     });
   } catch (error) {
     console.error("Error logging in: ", error);
@@ -137,7 +151,33 @@ const login = async (req, res) => {
   }
 };
 
+const verifyAuth = async (req, res) => {
+  const userId = req.user.userId;
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "User verified successfully",
+    });
+  } catch (error) {
+    console.log("Error verifying user: ", error);
+    return res.status(500).json({
+      message: "Server error while verifying user",
+    });
+  }
+};
+
 module.exports = {
   signup,
   login,
+  verifyAuth,
 };

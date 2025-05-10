@@ -14,12 +14,23 @@ const verifyToken = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (error) {
-    return res.status(401).json({
-      message: "Invalid Token",
+    const message =
+      error.name === "TokenExpiredError" ? "Token Expired" : "Invalid Token";
+    return res.status(401).json({ message });
+  }
+};
+
+const isAdmin = (req, res, next) => {
+  if (!req.user || req.user.role !== "ADMIN") {
+    return res.status(403).json({
+      success: false,
+      message: "Access denied. Admin privileges required.",
     });
   }
+  next();
 };
 
 module.exports = {
   verifyToken,
+  isAdmin,
 };

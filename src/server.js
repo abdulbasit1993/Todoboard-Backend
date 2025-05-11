@@ -12,6 +12,7 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:3000",
   "https://todoboard-admin-o3hatneg2-abdul-basit-mehtabs-projects.vercel.app",
+  "https://todoboard-admin.vercel.app",
 ];
 
 app.use(

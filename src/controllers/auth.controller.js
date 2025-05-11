@@ -59,7 +59,7 @@ const signup = async (req, res) => {
     // set the token in HTTP-only cookie
     res.cookie("token", accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       sameSite: "none",
       maxAge: 90 * 24 * 60 * 60 * 1000,
     });
@@ -127,7 +127,7 @@ const login = async (req, res) => {
     // set the token in HTTP-only cookie
     res.cookie("token", accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       sameSite: "none",
       maxAge: 90 * 24 * 60 * 60 * 1000,
     });

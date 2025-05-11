@@ -9,7 +9,10 @@ const PORT = process.env.PORT || 3001;
 
 const app = express();
 
-const allowedOrigins = ["http://localhost:3000"];
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://todoboard-admin-o3hatneg2-abdul-basit-mehtabs-projects.vercel.app",
+];
 
 app.use(
   cors({

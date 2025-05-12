@@ -9,24 +9,10 @@ const PORT = process.env.PORT || 3001;
 
 const app = express();
 
-const allowedOrigins = [
-  "https://todoboard-admin.vercel.app",
-  "http://localhost:3000",
-];
-
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: ["https://todoboard-admin.vercel.app"],
     credentials: true,
-    optionsSuccessStatus: 200,
   })
 );
 

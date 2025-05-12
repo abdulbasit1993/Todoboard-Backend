@@ -56,14 +56,6 @@ const signup = async (req, res) => {
       expiresIn: "90d",
     });
 
-    // set the token in HTTP-only cookie
-    res.cookie("token", accessToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "None",
-      maxAge: 90 * 24 * 60 * 60 * 1000,
-    });
-
     return res.status(201).json({
       success: true,
       message: "User created successfully",
@@ -74,6 +66,7 @@ const signup = async (req, res) => {
         role: user.role,
         createdAt: user.createdAt,
       },
+      token: accessToken,
     });
   } catch (error) {
     console.error("Error creating user: ", error);
@@ -124,14 +117,6 @@ const login = async (req, res) => {
       expiresIn: "90d",
     });
 
-    // set the token in HTTP-only cookie
-    res.cookie("token", accessToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "None",
-      maxAge: 90 * 24 * 60 * 60 * 1000,
-    });
-
     return res.status(200).json({
       success: true,
       message: "User logged in successfully",
@@ -142,6 +127,7 @@ const login = async (req, res) => {
         role: user.role,
         createdAt: user.createdAt,
       },
+      token: accessToken,
     });
   } catch (error) {
     console.error("Error logging in: ", error);

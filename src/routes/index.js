@@ -5,7 +5,7 @@ const todoRoute = require("./todo.route");
 const userRoute = require("./user.route");
 
 router.use("/auth", authRoute);
-router.use("/todo", todoRoute);
+router.use("/todos", todoRoute);
 router.use("/user", userRoute);
 
 module.exports = router;

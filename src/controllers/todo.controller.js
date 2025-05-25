@@ -64,7 +64,7 @@ const createTodo = async (req, res) => {
   }
 };
 
-const getAllTodos = async (req, res) => {
+const getAllUserTodos = async (req, res) => {
   try {
     const userId = req.user.userId;
 
@@ -226,10 +226,77 @@ const deleteTodo = async (req, res) => {
   }
 };
 
+const getAllTodos = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const pipeline = [
+      {
+        $sort: { createdAt: -1 },
+      },
+      {
+        $lookup: {
+          from: "users",
+          let: { userId: "$userId" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$_id", "$$userId"] },
+              },
+            },
+            {
+              $project: {
+                password: 0,
+                createdAt: 0,
+                updatedAt: 0,
+                __v: 0,
+              },
+            },
+          ],
+          as: "user",
+        },
+      },
+      {
+        $unwind: "$user",
+      },
+      {
+        $facet: {
+          metadata: [{ $count: "total" }],
+          data: [{ $skip: skip }, { $limit: limit }],
+        },
+      },
+    ];
+
+    const result = await Todo.aggregate(pipeline);
+
+    const todos = result[0].data;
+    const total = result[0].metadata[0]?.total || 0;
+
+    res.status(200).json({
+      success: true,
+      todos,
+      pagination: {
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        totalTodos: total,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error while fetching todos",
+    });
+  }
+};
+
 module.exports = {
   createTodo,
-  getAllTodos,
+  getAllUserTodos,
   getTodoById,
   updateTodo,
   deleteTodo,
+  getAllTodos,
 };

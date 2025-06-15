@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Todo = require("../models/todo");
 
 const createTodo = async (req, res) => {
@@ -228,15 +229,39 @@ const deleteTodo = async (req, res) => {
 
 const getAllTodos = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+    // const page = parseInt(req.query.page) || 1;
+    // const limit = parseInt(req.query.limit) || 10;
+
+    const { page = 1, limit = 10, status, userId } = req.query;
+  
+    const parsedPage = parseInt(page);
+    const parsedLimit = parseInt(limit);
+    const skip = (parsedPage - 1) * parsedLimit;
+
+    const allowedStatuses = ['pending', 'completed'];
+    if (status && !allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status filter value. Allowed values are 'pending' and 'completed'."
+      })
+    }
+
+    if (userId && !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid User ID format",
+      });
+    }
+
+    const matchStage = {};
+    if (status) matchStage.status = status;
 
     const pipeline = [
+      { $match: matchStage },
       {
         $sort: { createdAt: -1 },
       },
-      {
+       {
         $lookup: {
           from: "users",
           let: { userId: "$userId" },
@@ -261,14 +286,25 @@ const getAllTodos = async (req, res) => {
       {
         $unwind: "$user",
       },
+    ];
+
+    if (userId) {
+      pipeline.push({
+        $match: { 
+          "user._id": new mongoose.Types.ObjectId(userId)
+        },
+      });
+    }
+
+    pipeline.push(  
       {
         $facet: {
           metadata: [{ $count: "total" }],
-          data: [{ $skip: skip }, { $limit: limit }],
+          data: [{ $skip: skip }, { $limit: parsedLimit }],
         },
-      },
-    ];
-
+      }
+    );
+    
     const result = await Todo.aggregate(pipeline);
 
     const todos = result[0].data;
@@ -278,9 +314,9 @@ const getAllTodos = async (req, res) => {
       success: true,
       todos,
       pagination: {
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+        page: parsedPage,
+        limit: parsedLimit,
+        totalPages: Math.ceil(total / parsedLimit),
         totalTodos: total,
       },
     });

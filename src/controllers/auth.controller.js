@@ -79,6 +79,7 @@ const signup = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const appType = req.headers["x-app-type"];
 
     if (!email || !password) {
       return res.status(400).json({
@@ -110,6 +111,13 @@ const login = async (req, res) => {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password",
+      });
+    }
+
+    if (user.role === "ADMIN" && appType === "mobile") {
+      return res.status(403).json({
+        success: false,
+        message: "Admin users cannot log in through the mobile app",
       });
     }
 

@@ -13,6 +13,8 @@ router.get("/", verifyToken, isAdmin, todoController.getAllTodos);
 
 router.put("/update/:id", verifyToken, todoController.updateTodo);
 
+router.patch("/toggle/:id", verifyToken, todoController.toggleTodoStatus);
+
 router.delete("/delete/:id", verifyToken, todoController.deleteTodo);
 
 module.exports = router;

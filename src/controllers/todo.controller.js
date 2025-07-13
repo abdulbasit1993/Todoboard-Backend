@@ -68,8 +68,7 @@ const createTodo = async (req, res) => {
 const getAllUserTodos = async (req, res) => {
   try {
     const userId = req.user.userId;
-
-    const todos = await Todo.find({ userId: userId });
+    const { search, status } = req.query;
 
     if (!userId) {
       return res.status(404).json({
@@ -78,11 +77,47 @@ const getAllUserTodos = async (req, res) => {
       });
     }
 
+    const userIdObject = new mongoose.Types.ObjectId(`${userId}`);
+
+    const pipeline = [{ $match: { userId: userIdObject } }];
+
+    if (search && search.trim()) {
+      pipeline.push({
+        $match: {
+          $or: [
+            { title: { $regex: search.trim(), $options: "i" } },
+            { description: { $regex: search.trim(), $options: "i" } },
+          ],
+        },
+      });
+    }
+
+    const allowedStatusValues = ["pending", "completed"];
+
+    if (status && !allowedStatusValues.includes(status.trim())) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid status value. Allowed values are 'pending' and 'completed'.",
+      });
+    }
+
+    if (status && status.trim()) {
+      pipeline.push({
+        $match: {
+          status: status.trim(),
+        },
+      });
+    }
+
+    const todos = await Todo.aggregate(pipeline);
+
     return res.status(200).json({
       success: true,
       todos,
     });
   } catch (error) {
+    console.log("Error in getAllUserTodos: ", error);
     return res.status(500).json({
       success: false,
       message: "Server error while fetching todos",
@@ -229,21 +264,19 @@ const deleteTodo = async (req, res) => {
 
 const getAllTodos = async (req, res) => {
   try {
-    // const page = parseInt(req.query.page) || 1;
-    // const limit = parseInt(req.query.limit) || 10;
-
     const { page = 1, limit = 10, status, userId } = req.query;
-  
+
     const parsedPage = parseInt(page);
     const parsedLimit = parseInt(limit);
     const skip = (parsedPage - 1) * parsedLimit;
 
-    const allowedStatuses = ['pending', 'completed'];
+    const allowedStatuses = ["pending", "completed"];
     if (status && !allowedStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid status filter value. Allowed values are 'pending' and 'completed'."
-      })
+        message:
+          "Invalid status filter value. Allowed values are 'pending' and 'completed'.",
+      });
     }
 
     if (userId && !mongoose.Types.ObjectId.isValid(userId)) {
@@ -261,7 +294,7 @@ const getAllTodos = async (req, res) => {
       {
         $sort: { createdAt: -1 },
       },
-       {
+      {
         $lookup: {
           from: "users",
           let: { userId: "$userId" },
@@ -290,21 +323,19 @@ const getAllTodos = async (req, res) => {
 
     if (userId) {
       pipeline.push({
-        $match: { 
-          "user._id": new mongoose.Types.ObjectId(userId)
+        $match: {
+          "user._id": new mongoose.Types.ObjectId(userId),
         },
       });
     }
 
-    pipeline.push(  
-      {
-        $facet: {
-          metadata: [{ $count: "total" }],
-          data: [{ $skip: skip }, { $limit: parsedLimit }],
-        },
-      }
-    );
-    
+    pipeline.push({
+      $facet: {
+        metadata: [{ $count: "total" }],
+        data: [{ $skip: skip }, { $limit: parsedLimit }],
+      },
+    });
+
     const result = await Todo.aggregate(pipeline);
 
     const todos = result[0].data;
@@ -328,6 +359,47 @@ const getAllTodos = async (req, res) => {
   }
 };
 
+const toggleTodoStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const todoToUpdate = await Todo.findById(id);
+
+    if (!todoToUpdate) {
+      return res.status(404).json({
+        success: false,
+        message: "Todo not found",
+      });
+    }
+
+    const allowedStatusValues = ["pending", "completed"];
+
+    if (!allowedStatusValues.includes(todoToUpdate.status)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid status value. Allowed values are 'pending' and 'completed'.",
+      });
+    }
+
+    todoToUpdate.status =
+      todoToUpdate.status === "pending" ? "completed" : "pending";
+
+    await todoToUpdate.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Todo status updated successfully",
+      todo: todoToUpdate,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error while updating todo status",
+    });
+  }
+};
+
 module.exports = {
   createTodo,
   getAllUserTodos,
@@ -335,4 +407,5 @@ module.exports = {
   updateTodo,
   deleteTodo,
   getAllTodos,
+  toggleTodoStatus,
 };

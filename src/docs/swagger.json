@@ -1,0 +1,193 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "Todoboard APIs",
+    "version": "1.0.0",
+    "description": "Todoboard Application API Documentation"
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "paths": {
+    "/api/auth/signup": {
+      "post": {
+        "tags": ["Auth"],
+        "description": "User Signup",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "description": "The username of the user"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "The email of the user"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "description": "The password for the new user"
+                  }
+                },
+                "required": ["username", "email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {}
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "description": "User Login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "The email of the user"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "description": "The password of the user"
+                  }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {}
+      }
+    },
+    "/api/auth/profile": {
+      "get": {
+        "tags": ["Auth"],
+        "description": "Get the User Profile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {}
+      }
+    },
+    "/api/todos/add": {
+      "post": {
+        "tags": ["Todos"],
+        "description": "Add a Todo",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "example": "Buy Groceries"
+                  },
+                  "description": {
+                    "type": "string",
+                    "example": "Buy groceries for the month"
+                  },
+                  "dueDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": ["title"]
+              }
+            }
+          }
+        },
+        "responses": {}
+      }
+    },
+    "/api/todos/get": {
+      "get": {
+        "tags": ["Todos"],
+        "description": "Get User Todos",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Search term to filter todos by title or description",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter todos by status (pending or completed)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["pending", "completed"]
+            }
+          }
+        ],
+        "responses": {}
+      }
+    },
+    "/api/todos/get/{id}": {
+      "get": {
+        "tags": ["Todos"],
+        "description": "Get the todo by id",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": " term to filter todos by title or description",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {}
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

@@ -170,7 +170,97 @@
           {
             "name": "id",
             "in": "path",
-            "description": " term to filter todos by title or description",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {}
+      }
+    },
+    "/api/todos/update/{id}": {
+      "put": {
+        "tags": ["Todos"],
+        "description": "Update the todo by id",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "example": "Pay Bills"
+                  },
+                  "description": {
+                    "type": "string",
+                    "example": "Pay bills for the month"
+                  },
+                  "dueDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": ["title"]
+              }
+            }
+          }
+        },
+        "responses": {}
+      }
+    },
+    "/api/todos/toggle/{id}": {
+      "patch": {
+        "tags": ["Todos"],
+        "description": "Toggle the todo status",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {}
+      }
+    },
+    "/api/todos/delete/{id}": {
+      "delete": {
+        "tags": ["Todos"],
+        "description": "Delete the todo by id",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
             "required": true,
             "schema": {
               "type": "string"

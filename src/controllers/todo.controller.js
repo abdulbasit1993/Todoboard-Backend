@@ -68,7 +68,11 @@ const createTodo = async (req, res) => {
 const getAllUserTodos = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { search, status } = req.query;
+    const { search, status, page = 1, limit = 10 } = req.query;
+
+    const parsedPage = parseInt(page);
+    const parsedLimit = parseInt(limit);
+    const skip = (parsedPage - 1) * parsedLimit;
 
     if (!userId) {
       return res.status(404).json({
@@ -110,11 +114,31 @@ const getAllUserTodos = async (req, res) => {
       });
     }
 
-    const todos = await Todo.aggregate(pipeline);
+    pipeline.push(
+      { $sort: { createdAt: -1 } },
+      {
+        $facet: {
+          metadata: [{ $count: "total" }],
+          data: [{ $skip: skip }, { $limit: parsedLimit }],
+        },
+      }
+    );
+
+    const result = await Todo.aggregate(pipeline);
+
+    const todos = result[0].data;
+
+    const total = result[0].metadata[0]?.total || 0;
 
     return res.status(200).json({
       success: true,
       todos,
+      pagination: {
+        page: parsedPage,
+        limit: parsedLimit,
+        totalPages: Math.ceil(total / parsedLimit),
+        totalTodos: total,
+      },
     });
   } catch (error) {
     console.log("Error in getAllUserTodos: ", error);
